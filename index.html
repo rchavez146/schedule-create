@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule Maker Demo</title>
+    <link rel="stylesheet" href="styles.css?v=2026-05-19-setup-return" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Branch Operations Planner Demo</p>
+          <h1 id="scheduleTitle">Schedule Builder</h1>
+          <p id="scheduleRange" class="schedule-range"></p>
+        </div>
+        <div class="controls" aria-label="Schedule controls">
+          <div class="control-group control-group-fields">
+            <label class="control">
+              <span>Week Start</span>
+              <input id="weekStart" type="date" />
+            </label>
+            <label class="control">
+              <span>Week Type</span>
+              <select id="weekType">
+                <option>Week A</option>
+                <option>Week B</option>
+                <option>Week C</option>
+                <option>Week D</option>
+                <option>Week E</option>
+                <option>Week F</option>
+                <option>Week G</option>
+                <option>Week H</option>
+                <option>Custom</option>
+              </select>
+            </label>
+          </div>
+          <div class="control-group control-group-primary">
+            <button id="openFirstTimeSetup" type="button" class="secondary-button setup-button">
+              First-Time Setup
+            </button>
+            <button id="openBranchRules" type="button" class="secondary-button setup-button">
+              Branch Rules
+            </button>
+            <button id="exportScheduleJson" type="button" class="secondary-button file-action-button">
+              Save Weekly File
+            </button>
+            <button id="importScheduleJson" type="button" class="secondary-button open-action-button">
+              Open File
+            </button>
+            <button id="printSchedule" type="button" class="secondary-button print-action-button">
+              Print
+            </button>
+            <button id="autoFillCoverage" type="button" class="primary-button">
+              Auto Fill Schedule
+            </button>
+          </div>
+          <div class="control-group control-group-secondary control-group-menu">
+            <div class="more-menu-wrap">
+              <button id="toggleMoreMenu" type="button" class="secondary-button">
+                More
+              </button>
+              <div id="moreMenu" class="more-menu is-hidden">
+                <button id="openTutorial" type="button" class="secondary-button more-menu-button help-menu-button">
+                  Tutorial
+                </button>
+                <button id="openAutoFillOptions" type="button" class="secondary-button more-menu-button settings-menu-button">
+                  Auto Fill Options
+                </button>
+                <button id="openStationSetup" type="button" class="secondary-button more-menu-button station-menu-button">
+                  Station Setup
+                </button>
+                <button id="resetTasks" type="button" class="secondary-button more-menu-button reset-menu-button">
+                  Reset Tasks
+                </button>
+                <button id="resetSchedule" type="button" class="secondary-button more-menu-button reset-menu-button">
+                  Reset Schedule
+                </button>
+                <button id="clearWorkspace" type="button" class="secondary-button more-menu-button danger-menu-button">
+                  Clear To Blank
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="saveStatus" class="save-status" aria-live="polite"></div>
+      </header>
+
+      <section class="employee-panel">
+        <div class="employee-panel-header">
+          <div>
+            <h2>Employees</h2>
+            <p>Update the team list here and the schedule refreshes right away.</p>
+          </div>
+          <div class="employee-panel-actions">
+            <button id="toggleEmployeeForm" type="button">Add Employee</button>
+            <button id="addHelperRow" type="button" class="secondary-button">Add Helper Row</button>
+          </div>
+        </div>
+        <form id="employeeForm" class="employee-form is-hidden">
+          <div class="employee-form-main">
+            <section class="employee-form-section">
+              <h3>Employee Info</h3>
+              <div class="employee-form-grid">
+                <label class="control employee-row-type-control">
+                  <span>Row Type</span>
+                  <select id="employeeRowType">
+                    <option value="standard">Standard Employee</option>
+                    <option value="assist">Assist Row</option>
+                  </select>
+                </label>
+                <label class="control">
+                  <span>Name</span>
+                  <input id="employeeName" type="text" />
+                </label>
+                <label class="control standard-only-field">
+                  <span>Key Type</span>
+                  <select id="employeeKeyType">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="CUSTOM">Custom</option>
+                  </select>
+                </label>
+                <label class="control standard-only-field">
+                  <span>Custom Key Label</span>
+                  <input id="employeeCustomKeyType" type="text" placeholder="C" />
+                </label>
+                <label class="control standard-only-field">
+                  <span>ID Number</span>
+                  <input id="employeeIdNumber" type="text" />
+                </label>
+                <label class="control standard-only-field">
+                  <span>Drawer</span>
+                  <input id="employeeDrawerNumber" type="text" placeholder="5v" />
+                </label>
+              </div>
+              <div id="assistRowHelp" class="assist-row-help is-hidden">
+                <strong>Helper rows are for temporary coverage.</strong>
+                <p>These rows start blank. Change only the days when outside help is coming in, then put the helper’s name in the note and assign their shift for that day.</p>
+              </div>
+            </section>
+            <section id="employeeScheduleSetupSection" class="employee-form-section">
+              <h3>Schedule Setup</h3>
+              <div class="employee-form-grid">
+                <label class="control">
+                  <span>Fixed Day Off</span>
+                  <select id="employeeFixedDayOff"></select>
+                </label>
+                <label class="control">
+                  <span>Saturday Rotation</span>
+                  <select id="employeeSaturdayGroup">
+                    <option value="0">Works Every Rotating Saturday</option>
+                    <option value="odd">Every Other Saturday Off: A/C/E/G</option>
+                    <option value="even">Every Other Saturday Off: B/D/F/H</option>
+                    <option value="1">Week A Off</option>
+                    <option value="2">Week B Off</option>
+                    <option value="3">Week C Off</option>
+                    <option value="4">Week D Off</option>
+                    <option value="5">Week E Off</option>
+                    <option value="6">Week F Off</option>
+                    <option value="7">Week G Off</option>
+                    <option value="8">Week H Off</option>
+                  </select>
+                </label>
+                <label class="control">
+                  <span>Employment</span>
+                  <select id="employeeEmploymentType">
+                    <option value="full_time">Full Time</option>
+                    <option value="part_time">Part Time</option>
+                  </select>
+                </label>
+                <label class="control">
+                  <span>Target Hours</span>
+                  <input id="employeeTargetHours" type="number" min="0" step="0.5" placeholder="40" />
+                </label>
+              </div>
+              <p class="section-help">
+                Choose the employee's Saturday-off pattern. For alternating pairs, put one employee on A/C/E/G off weeks and the other on B/D/F/H off weeks.
+              </p>
+            </section>
+          </div>
+          <div id="employeeFormSide" class="employee-form-side">
+            <fieldset class="role-picker">
+              <legend>Roles / Tags</legend>
+              <label>
+                <input type="checkbox" class="employee-role-option" value="T" />
+                T
+              </label>
+              <label>
+                <input type="checkbox" class="employee-role-option" value="FSC" />
+                FSC
+              </label>
+              <label>
+                <input id="employeeLeadEligible" type="checkbox" />
+                Lead Eligible
+              </label>
+            </fieldset>
+            <label class="control side-control">
+              <span>Other Roles</span>
+              <input id="employeeCustomRoles" type="text" placeholder="IRA, B, ADV" />
+            </label>
+            <fieldset class="role-picker task-exemption-picker">
+              <legend>Do Not Auto Assign</legend>
+              <label>
+                <input type="checkbox" class="employee-task-exemption" value="opener" />
+                Opener
+              </label>
+              <label>
+                <input type="checkbox" class="employee-task-exemption" value="closingLead" />
+                Closing Lead
+              </label>
+              <label>
+                <input type="checkbox" class="employee-task-exemption" value="nightDrop" />
+                Night Drop
+              </label>
+              <label>
+                <input type="checkbox" class="employee-task-exemption" value="driveThru" />
+                Drive Thru
+              </label>
+            </fieldset>
+          </div>
+          <div class="employee-form-actions">
+            <button id="backToSetupFromEmployees" type="button" class="secondary-button setup-return-button is-hidden">
+              Back To First-Time Setup
+            </button>
+            <button id="saveEmployee" type="submit">Save Employee</button>
+            <button id="cancelEmployeeEdit" type="button" class="secondary-button">
+              Cancel
+            </button>
+          </div>
+        </form>
+        <div id="employeeRoster" class="employee-roster"></div>
+      </section>
+
+      <section class="legend-panel">
+        <div>
+          <h2>Rotation Rules</h2>
+          <p>
+            Saturday defaults to <strong>8:30am-1:30pm</strong>, but the cell editor can change it for branches that open earlier. In
+            <strong>Week A</strong> through <strong>Week H</strong>,
+            Saturday coverage follows each employee's assigned rotation pattern.
+          </p>
+          <p>
+            Anyone assigned on Saturday is automatically scheduled
+            <strong>OFF</strong> on their fixed weekday off.
+          </p>
+        </div>
+        <div class="legend-grid">
+          <span class="chip chip-off">OFF</span>
+          <span class="chip chip-lead">Lead</span>
+          <span class="chip chip-opener">Opener</span>
+          <span class="chip chip-task">Night Drop</span>
+          <span class="chip chip-drive">Drive Thru</span>
+          <span class="chip chip-audit">Audit Vault</span>
+          <span class="chip chip-pto">PTO</span>
+          <span class="chip chip-holiday">Holiday</span>
+        </div>
+      </section>
+
+      <div class="workspace-switcher">
+        <div class="workspace-main">
+          <span class="workspace-label">Workspace</span>
+          <nav class="workspace-tabs" aria-label="Schedule workspace">
+            <button id="scheduleTabButton" type="button" class="workspace-tab is-active" data-tab="schedule">
+              Schedule
+            </button>
+            <button id="assignmentTabButton" type="button" class="workspace-tab" data-tab="assignments">
+              Station Plan
+            </button>
+          </nav>
+        </div>
+        <div class="branch-option">
+          <span class="branch-option-label">Branch Option</span>
+          <label class="assignment-toggle">
+            <input id="stationScheduleToggle" type="checkbox" checked />
+            <span>Enable station, lunch, and lobby plan</span>
+          </label>
+        </div>
+      </div>
+
+      <section id="scheduleWorkspace" class="workspace-panel is-active">
+        <section class="coverage-panel">
+          <div class="coverage-card">
+            <h2>Daily Coverage</h2>
+            <div id="coverageSummary" class="coverage-summary"></div>
+          </div>
+        </section>
+
+        <main class="table-wrap">
+          <table class="schedule-table">
+            <thead id="scheduleHead"></thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </main>
+      </section>
+
+      <section id="assignmentWorkspace" class="workspace-panel">
+        <section class="assignment-details-panel">
+          <div class="assignment-details-card">
+            <div class="assignment-details-header">
+              <div>
+                <h2>Station Plan</h2>
+                <p>Review and adjust station, lunch, and lobby lead coverage here. These details stay connected to the matching schedule cells.</p>
+              </div>
+              <div class="assignment-details-actions">
+                <button id="autoFillStations" type="button" class="secondary-button">Auto Fill Station Plan</button>
+              </div>
+            </div>
+            <div id="assignmentDetails" class="assignment-details"></div>
+          </div>
+        </section>
+      </section>
+    </div>
+
+    <template id="employeeCellTemplate">
+      <td class="schedule-cell">
+        <button type="button" class="cell-edit-button" aria-label="Edit cell">✎</button>
+        <div class="cell-stack">
+          <div class="shift-line">
+            <div class="shift-display"></div>
+          </div>
+          <div class="cell-notes"></div>
+        </div>
+      </td>
+    </template>
+
+    <aside id="cellEditor" class="cell-editor is-hidden" aria-live="polite">
+      <div class="cell-editor-header">
+        <div>
+          <p class="eyebrow">Cell Editor</p>
+          <h2 id="cellEditorTitle">Select a schedule cell</h2>
+          <p id="cellEditorSubtitle" class="cell-editor-subtitle">Click any employee/day cell to edit it.</p>
+        </div>
+      </div>
+      <p id="bulkEditorHint" class="bulk-editor-hint is-hidden">Only the fields you change here will be applied to all selected cells.</p>
+      <div class="cell-editor-body">
+        <section class="editor-section editor-section-shift">
+          <h3>Shift</h3>
+          <label class="control">
+            <span>Shift Time</span>
+            <select id="cellEditorShift"></select>
+          </label>
+          <button id="cellEditorCustomShift" type="button" class="custom-shift-button">+ Add Custom Shift Time</button>
+          <p class="custom-shift-help">Use this when the time is not listed in the dropdown.</p>
+          <label id="cellEditorPtoField" class="control">
+            <span>PTO Hours</span>
+            <input id="cellEditorPtoHours" type="number" min="0" max="24" step="0.5" placeholder="PTO hrs" />
+          </label>
+        </section>
+        <section class="editor-section editor-section-coverage-details">
+          <details id="cellEditorCoveragePanel" class="station-editor-details">
+            <summary>
+              <span>Station / Lunch Plan</span>
+              <small id="cellEditorCoverageStatus" class="editor-section-status"></small>
+            </summary>
+            <div class="editor-section-control">
+              <div>
+                <h3>Optional Station Details</h3>
+                <p class="editor-section-status">These details appear on the Station Plan tab instead of crowding the schedule cells.</p>
+              </div>
+              <div class="editor-section-actions">
+                <button id="cellEditorStationSetup" type="button" class="editor-toggle-button">Setup</button>
+                <button id="cellEditorStationToggle" type="button" class="editor-toggle-button">Turn Off</button>
+              </div>
+            </div>
+            <div id="cellEditorCoverageFields" class="coverage-detail-fields">
+              <label class="control">
+                <span>Station or Office</span>
+                <input id="cellEditorStation" type="text" placeholder="Teller 1, Office 2, Lobby" />
+              </label>
+              <label class="control">
+                <span>Lunch</span>
+                <input id="cellEditorLunch" type="text" placeholder="12:30-1:30" />
+              </label>
+              <label class="control">
+                <span>Lobby Lead</span>
+                <input id="cellEditorLobbyLead" type="text" placeholder="9:00-10:00, 2:00-3:00" />
+              </label>
+            </div>
+          </details>
+        </section>
+        <section class="editor-section editor-section-notes">
+          <h3>Notes</h3>
+          <label class="control">
+            <span>Note</span>
+            <input id="cellEditorNote" type="text" placeholder="Add note" />
+          </label>
+          <label class="control">
+            <span>Note Color</span>
+            <select id="cellEditorNoteColor"></select>
+          </label>
+        </section>
+        <section class="editor-section editor-section-appearance">
+          <h3>Appearance</h3>
+          <div class="color-controls">
+            <label class="control">
+              <span>Cell Color</span>
+              <select id="cellEditorCellColor"></select>
+            </label>
+          </div>
+        </section>
+        <section class="editor-section editor-section-tasks cell-editor-tasks">
+          <h3>Tasks</h3>
+          <div id="builtInTaskList" class="task-list"></div>
+          <div id="customTaskList" class="task-list"></div>
+          <button id="cellEditorAddCustomTask" type="button" class="secondary-button">
+            + Add Custom Task
+          </button>
+        </section>
+      </div>
+      <div class="cell-editor-footer">
+        <button id="closeCellEditorBottom" type="button" class="secondary-button">Close</button>
+        <button id="resetBulkSelection" type="button" class="secondary-button is-hidden">Reset Selected Cells</button>
+        <button id="applyBulkChanges" type="button" class="is-hidden bulk-apply-button">Apply To Selected Cells</button>
+      </div>
+    </aside>
+
+    <div id="confirmModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="confirm-card">
+        <p class="eyebrow">Please Confirm</p>
+        <h2 id="confirmTitle">Continue?</h2>
+        <p id="confirmMessage"></p>
+        <div class="confirm-actions">
+          <button id="confirmCancel" type="button" class="secondary-button">Cancel</button>
+          <button id="confirmAccept" type="button">Continue</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="customShiftModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="customShiftTitle">
+      <div class="confirm-card">
+        <p class="eyebrow">Custom Shift</p>
+        <h2 id="customShiftTitle">Enter Shift Time</h2>
+        <p>Use the same format as the schedule, like <strong>8-1:30</strong> or <strong>8:00-5:30</strong>.</p>
+        <label class="control custom-shift-field">
+          <span>Shift</span>
+          <input id="customShiftInput" type="text" placeholder="8-1:30" />
+        </label>
+        <label class="modal-check-option">
+          <input id="customShiftSavePreset" type="checkbox" />
+          <span>Save this time to the shift dropdown for this branch</span>
+        </label>
+        <p id="customShiftError" class="form-error"></p>
+        <div class="confirm-actions">
+          <button id="customShiftCancel" type="button" class="secondary-button">Cancel</button>
+          <button id="customShiftAccept" type="button">Use Shift</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="autoFillOptionsModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="autoFillOptionsTitle">
+      <div class="confirm-card">
+        <p class="eyebrow">Auto Fill</p>
+        <h2 id="autoFillOptionsTitle">Auto Fill Options</h2>
+        <p>Choose which task tags Auto Fill Schedule should manage for this branch.</p>
+        <div class="modal-check-grid">
+          <label class="modal-check-option">
+            <input id="autoFillOpener" type="checkbox" />
+            <span>Assign Opener</span>
+          </label>
+          <label class="modal-check-option">
+            <input id="autoFillClosingLead" type="checkbox" />
+            <span>Assign Closing Lead</span>
+          </label>
+          <label class="modal-check-option">
+            <input id="autoFillNightDrop" type="checkbox" />
+            <span>Assign Night Drop</span>
+          </label>
+          <label class="modal-check-option">
+            <input id="autoFillDriveThru" type="checkbox" />
+            <span>Assign Drive Thru</span>
+          </label>
+        </div>
+        <p class="section-help">Disabled tasks will not be auto-assigned or flagged as missing in Daily Coverage.</p>
+        <div class="confirm-actions">
+          <button id="autoFillOptionsClose" type="button">Save Options</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="stationAutoFillModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="stationAutoFillTitle">
+      <div class="confirm-card wide-card">
+        <p class="eyebrow">Station Plan</p>
+        <h2 id="stationAutoFillTitle">Auto Fill Stations / Offices</h2>
+        <div class="station-setup-hero">
+          <div>
+            <p class="tutorial-kicker">Branch station setup</p>
+            <p>Build the branch station list once. Each station or office can have its own lunch time, then Auto Fill randomly assigns them to scheduled employees.</p>
+          </div>
+          <span class="station-setup-badge">Saved in template</span>
+        </div>
+        <div class="station-setup-toolbar">
+          <button id="stationAutoFillAddStation" type="button" class="secondary-button">Add Station</button>
+          <button id="stationAutoFillAddOffice" type="button" class="secondary-button">Add Office</button>
+        </div>
+        <p id="stationAutoFillStatus" class="station-setup-status" aria-live="polite"></p>
+        <div class="station-location-head" aria-hidden="true">
+          <span>Station / Office</span>
+          <span>Lunch</span>
+          <span></span>
+        </div>
+        <div id="stationAutoFillLocations" class="station-location-list"></div>
+        <div class="station-config-grid compact">
+          <label class="control">
+            <span>Lobby Lead Blocks</span>
+            <input id="stationAutoFillLobbyMinutes" type="number" min="30" step="30" />
+          </label>
+          <label class="modal-check-option station-randomize-option">
+            <input id="stationAutoFillRandomize" type="checkbox" />
+            <span>Randomize station assignments each time</span>
+          </label>
+        </div>
+        <p class="section-help">Example: Office 2 can always carry lunch at 12:00. The Station Plan tab stays editable after auto fill.</p>
+        <div class="confirm-actions">
+          <button id="backToSetupFromStation" type="button" class="secondary-button setup-return-button is-hidden">
+            Back To First-Time Setup
+          </button>
+          <button id="stationAutoFillCancel" type="button" class="secondary-button">Cancel</button>
+          <button id="stationAutoFillSave" type="button" class="secondary-button">Save Setup</button>
+          <button id="stationAutoFillApply" type="button">Save & Auto Fill</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="branchRulesModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="branchRulesTitle">
+      <div class="confirm-card wide-card branch-rules-card">
+        <p class="eyebrow">Branch Rules</p>
+        <h2 id="branchRulesTitle">Set Branch Schedule Rules</h2>
+        <p class="setup-guide-intro">These rules are saved into the Branch Template. When the template is imported later, these become the branch’s default shift times, station setup, and auto-fill behavior.</p>
+        <div class="branch-rules-grid">
+          <section class="branch-rule-box">
+            <span class="tutorial-step">Times</span>
+            <h3>Shift Times</h3>
+            <p>Start blank, then add only the shift times this branch actually uses. Universal status options like OFF, PTO, Holiday, and Dark Cell always remain available.</p>
+            <div class="branch-shift-add">
+              <input id="branchShiftInput" type="text" placeholder="8-5:45" />
+              <button id="branchShiftAdd" type="button" class="secondary-button">Add Time</button>
+            </div>
+            <p id="branchShiftStatus" class="station-setup-status" aria-live="polite"></p>
+            <div id="branchShiftList" class="branch-rule-list"></div>
+          </section>
+          <section class="branch-rule-box">
+            <span class="tutorial-step">Stations</span>
+            <h3>Stations / Offices</h3>
+            <p>Start blank, then add each station or office and the lunch tied to that location. Example: Office 2 gets lunch at 12:00.</p>
+            <button id="branchRulesStationSetup" type="button" class="secondary-button">Open Station Setup</button>
+          </section>
+          <section class="branch-rule-box">
+            <span class="tutorial-step">Tasks</span>
+            <h3>Auto Fill Tasks</h3>
+            <p>Choose which task tags Auto Fill Schedule should manage for this branch.</p>
+            <button id="branchRulesAutoFillOptions" type="button" class="secondary-button">Open Auto Fill Options</button>
+          </section>
+          <section class="branch-rule-box is-final">
+            <span class="tutorial-step">Template</span>
+            <h3>Save The Rules Template</h3>
+            <p>This is the button that saves reusable branch rules: employees, rotations, shift times, task exemptions, station setup, and auto-fill settings.</p>
+            <button id="branchRulesCreateTemplate" type="button">Create Branch Template File</button>
+          </section>
+        </div>
+        <div class="confirm-actions">
+          <button id="backToSetupFromBranchRules" type="button" class="secondary-button setup-return-button is-hidden">
+            Back To First-Time Setup
+          </button>
+          <button id="branchRulesClose" type="button" class="secondary-button">Close</button>
+          <button id="branchRulesSave" type="button">Apply Rules To Draft</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="firstTimeSetupModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="firstTimeSetupTitle">
+      <div class="confirm-card wide-card setup-guide-card">
+        <p class="eyebrow">First-Time Setup</p>
+        <h2 id="firstTimeSetupTitle">Create A Branch Template</h2>
+        <p class="setup-guide-intro">Use this checklist the first time a branch is setting up the scheduler. When finished, save a Branch Template JSON in a secure place so future schedules start from the right rules.</p>
+        <div class="setup-guide-grid">
+          <section class="setup-guide-step">
+            <span class="tutorial-step">1</span>
+            <h3>Add Employees</h3>
+            <p>Add names, roles, target hours, fixed days off, Saturday rotations, and Lead Eligible where needed.</p>
+            <button id="setupGuideAddEmployees" type="button" class="secondary-button">Go To Employees</button>
+          </section>
+          <section class="setup-guide-step">
+            <span class="tutorial-step">2</span>
+            <h3>Set Branch Rules</h3>
+            <p>Add the branch’s shift times first, then choose Auto Fill Options, station setup, and whether the branch uses Station Plan.</p>
+            <button id="setupGuideBranchRules" type="button" class="secondary-button">Branch Rules</button>
+          </section>
+          <section class="setup-guide-step">
+            <span class="tutorial-step">3</span>
+            <h3>Build Station Setup</h3>
+            <p>Add each station or office and set lunch times tied to each location.</p>
+            <button id="setupGuideStationSetup" type="button" class="secondary-button">Station Setup</button>
+          </section>
+          <section class="setup-guide-step is-final">
+            <span class="tutorial-step">4</span>
+            <h3>Save Template</h3>
+            <p>Create the clean Branch Template. This is the reusable rules file for future schedules.</p>
+            <button id="setupGuideCreateTemplate" type="button">Create Branch Template File</button>
+          </section>
+        </div>
+        <div class="confirm-actions">
+          <button id="firstTimeSetupClose" type="button" class="secondary-button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="saveScheduleModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="saveScheduleTitle">
+      <div class="confirm-card">
+        <p class="eyebrow">Named Save</p>
+        <h2 id="saveScheduleTitle">Save Schedule Snapshot</h2>
+        <label class="control custom-shift-field">
+          <span>Save Name</span>
+          <input id="saveScheduleName" type="text" placeholder="Week A Frontline" />
+        </label>
+        <p id="saveScheduleError" class="form-error"></p>
+        <div class="confirm-actions">
+          <button id="saveScheduleModalCancel" type="button" class="secondary-button">Cancel</button>
+          <button id="saveScheduleModalAccept" type="button">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="loadSchedulesModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="loadSchedulesTitle">
+      <div class="confirm-card wide-card">
+        <p class="eyebrow">Saved Schedules</p>
+        <h2 id="loadSchedulesTitle">Load or Delete a Save</h2>
+        <div id="savedSchedulesList" class="saved-schedules-list"></div>
+        <div class="confirm-actions">
+          <button id="loadSchedulesClose" type="button" class="secondary-button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="customTasksModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="customTasksTitle">
+      <div class="confirm-card wide-card">
+        <p class="eyebrow">Custom Tasks</p>
+        <h2 id="customTasksTitle">Manage Custom Tasks</h2>
+        <div class="custom-task-create">
+          <label class="control">
+            <span>Task Name</span>
+            <input id="customTaskName" type="text" placeholder="Training" />
+          </label>
+          <label class="control">
+            <span>Color</span>
+            <select id="customTaskColor"></select>
+          </label>
+          <button id="customTaskCreate" type="button">Add Task</button>
+        </div>
+        <p id="customTaskError" class="form-error"></p>
+        <div id="customTaskManagerList" class="saved-schedules-list"></div>
+        <div class="confirm-actions">
+          <button id="customTasksClose" type="button" class="secondary-button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tutorialModal" class="modal-backdrop is-hidden" role="dialog" aria-modal="true" aria-labelledby="tutorialTitle">
+      <div class="confirm-card wide-card tutorial-card">
+        <p class="eyebrow">Quick Guide</p>
+        <h2 id="tutorialTitle">Schedule Maker Tutorial</h2>
+        <div class="tutorial-hero">
+          <div>
+            <p class="tutorial-kicker">Recommended workflow</p>
+            <p>Use a branch template as the safe starting point, then save weekly schedules as separate files. This keeps the app useful without needing a login or server.</p>
+          </div>
+          <div class="tutorial-badges" aria-label="Main workflow shortcuts">
+            <span>Template First</span>
+            <span>Weekly Files</span>
+            <span>Secure Backup</span>
+            <span>Print Ready</span>
+          </div>
+        </div>
+        <div class="tutorial-workflows">
+          <section class="tutorial-workflow-card">
+            <span class="tutorial-step">First Time</span>
+            <h3>Initial Branch Setup</h3>
+            <ol class="tutorial-list">
+              <li>Add employees with their roles, target hours, fixed day off, and Saturday rotation.</li>
+              <li>Add any custom tasks the branch uses regularly.</li>
+              <li>Turn the Station Plan on or off depending on whether the branch tracks stations, lunches, offices, or lobby lead.</li>
+              <li>Use <strong>Branch Rules</strong> to add the branch’s own shift times from scratch, station/office lunches, and auto-fill behavior.</li>
+              <li>Only saved branch shift times appear in the cell editor, plus universal statuses like OFF, PTO, Holiday, and Dark Cell.</li>
+              <li>The <strong>First-Time Setup</strong> button at the top walks through these template steps in order.</li>
+              <li>Use <strong>Auto Fill Options</strong> in the More menu to disable auto-assigned tasks the branch does not use, such as Night Drop.</li>
+              <li>Use <strong>Create Branch Template</strong> after setup. This is the reusable file that saves branch rules, employees, rotations, shift times, task exemptions, station setup, and auto-fill options.</li>
+              <li>Save that template JSON in a secure place, such as OneDrive or another approved branch folder.</li>
+            </ol>
+          </section>
+          <section class="tutorial-workflow-card">
+            <span class="tutorial-step">Every Week</span>
+            <h3>Returning User Plan</h3>
+            <ol class="tutorial-list">
+              <li>Click <strong>Open File</strong> and import the branch template or last week’s saved schedule.</li>
+              <li>Set the week start date and choose Week A through Week H, or Custom.</li>
+              <li>Use <strong>Auto Fill Schedule</strong>, then adjust PTO, holidays, helper rows, notes, tasks, and Station Plan details.</li>
+              <li>Click <strong>Save Weekly File</strong> to save the finished weekly schedule as its own JSON file.</li>
+              <li>Print the <strong>Schedule</strong> tab and, if used, print the <strong>Station Plan</strong> tab separately.</li>
+            </ol>
+          </section>
+        </div>
+        <div class="tutorial-grid">
+          <section class="tutorial-section tutorial-section-feature">
+            <span class="tutorial-step">Start</span>
+            <h3>Top Buttons</h3>
+            <ul class="tutorial-list">
+              <li><strong>Save Weekly File</strong> saves the current week exactly as it is: employees, shifts, notes, PTO, holidays, tasks, custom tasks, colors, rules, and Station Plan details.</li>
+              <li><strong>Open File</strong> imports a saved JSON schedule or branch template.</li>
+              <li><strong>Print</strong> prints the active tab only: Schedule if that tab is open, or Station Plan if that tab is open.</li>
+              <li><strong>Auto Fill Schedule</strong> rebuilds target hours and fills the task tags enabled in Auto Fill Options.</li>
+              <li><strong>Create Branch Template</strong> is different from Save Weekly File: it saves a clean reusable rules template without weekly PTO, notes, helper rows, or one-week task assignments.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Setup</span>
+            <h3>Employees</h3>
+            <ul class="tutorial-list">
+              <li>Use <strong>Add Employee</strong> to enter name, key type, drawer, roles, fixed day off, employment type, target hours, and Saturday rotation.</li>
+              <li><strong>Full Time</strong> defaults to 40 hours. <strong>Part Time</strong> can use a custom target, such as 20 hours.</li>
+              <li>Use <strong>Lead Eligible</strong> for employees who can be assigned opener, lead, or closing lead tasks.</li>
+              <li>Use <strong>Do Not Auto Assign</strong> when Auto Fill Schedule should skip an employee for opener, closing lead, night drop, or drive thru.</li>
+              <li>Add <strong>Manager</strong> or <strong>Supervisor</strong> in Other Roles if they should be skipped for auto-assigned Night Drop.</li>
+              <li>Edit or remove employees from the roster card. The schedule updates after saving changes.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Rotation</span>
+            <h3>Saturday Rotation</h3>
+            <ul class="tutorial-list">
+              <li><strong>Week A Off</strong> through <strong>Week H Off</strong> mean the employee is off Saturday only during that week type.</li>
+              <li>For every-other-Saturday rotations, use <strong>A/C/E/G Off</strong> for one person and <strong>B/D/F/H Off</strong> for the alternating person.</li>
+              <li><strong>Works Every Rotating Saturday</strong> means they work Saturday on every normal rotation week.</li>
+              <li><strong>Custom</strong> week type leaves Saturday open so a manager can build a special week manually.</li>
+              <li>If an employee works Saturday, their fixed weekday off is automatically used during the week.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Cells</span>
+            <h3>Editing Cells</h3>
+            <ul class="tutorial-list">
+              <li>Click a schedule cell to open the side editor.</li>
+              <li>Use <strong>Shift Time</strong> for branch-approved shifts, PTO, OFF, Holiday, Dark Cell, or Saturday shifts.</li>
+              <li>Use <strong>Add Custom Shift Time</strong> for unusual shifts. Shorthand works, so <strong>8-1:30</strong> becomes <strong>8:00-1:30</strong>.</li>
+              <li>Check <strong>Save this time to the shift dropdown</strong> if the branch uses that custom time often. It becomes part of the Branch Rules saved in the template.</li>
+              <li><strong>Dark Cell</strong> blacks out a cell and counts zero hours. <strong>Holiday</strong> counts as 8 paid hours but does not count as staffed coverage.</li>
+              <li>Add notes, note colors, cell colors, and task tags from the editor. Notes and tasks stay separate on the schedule.</li>
+              <li>Use <strong>Add Custom Task</strong> if the branch needs a task that is not already listed.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Bulk</span>
+            <h3>Multi-Cell Editing</h3>
+            <ul class="tutorial-list">
+              <li>Ctrl/Cmd + click cells to select multiple cells.</li>
+              <li>The editor changes to bulk mode and applies only the fields you actually change.</li>
+              <li>Use bulk mode to apply shifts, PTO hours, notes, colors, task changes, or station/lunch details to several cells at once.</li>
+              <li>Use <strong>Reset</strong> in the editor to clear selected cells, or <strong>Close</strong> to leave the selection.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section tutorial-section-feature">
+            <span class="tutorial-step">Branch Option</span>
+            <h3>Station Plan</h3>
+            <ul class="tutorial-list">
+              <li>Turn on <strong>Enable station, lunch, and lobby plan</strong> only if the branch uses station, office, lunch, or lobby lead planning.</li>
+              <li>You can turn this feature on or off from the workspace switcher or directly inside the cell editor.</li>
+              <li>Station, lunch, and lobby lead details display on the <strong>Station Plan</strong> tab instead of crowding the schedule cells.</li>
+              <li>Use <strong>Station Setup</strong> from the More menu or cell editor to set each station/office and its lunch time.</li>
+              <li>Use <strong>Auto Fill Station Plan</strong> to randomly assign those configured stations/offices to scheduled employees.</li>
+              <li>The Station Plan tab can be edited directly, and it prints separately when that tab is active.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Helpers</span>
+            <h3>Helper Rows</h3>
+            <ul class="tutorial-list">
+              <li>Click <strong>Add Helper Row</strong> when outside help is coming from another branch or talent pool.</li>
+              <li>Helper rows start neutral and do not affect hours or coverage until a shift is added.</li>
+              <li>Put the helper’s name in the note for the day they are helping.</li>
+              <li>Use <strong>Dark Cell</strong> on unused days if you want those helper cells blacked out.</li>
+              <li>Use the helper row’s <strong>Remove</strong> button to delete it.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Coverage</span>
+            <h3>Auto Fill Coverage</h3>
+            <ul class="tutorial-list">
+              <li>Auto Fill rebuilds shifts to target hours first, then assigns the enabled task tags.</li>
+              <li>Use <strong>More > Auto Fill Options</strong> to turn off task tags the branch does not want auto-filled or flagged, such as Night Drop.</li>
+              <li>Auto Fill uses normal opening schedules. It does <strong>not</strong> create <strong>7:30</strong> shifts on its own.</li>
+              <li>Opener must start at opening time and have at least one other person with them.</li>
+              <li>Closer must stay until closing time and have at least three coworkers closing too.</li>
+              <li>Use the <strong>Daily Coverage</strong> cards to check the enabled coverage requirements.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Files</span>
+            <h3>Saving, Templates, And Print</h3>
+            <ul class="tutorial-list">
+              <li><strong>Save Weekly File</strong> is the main backup for a completed weekly schedule. Keep the JSON somewhere safe so the schedule can be reopened later.</li>
+              <li><strong>Create Branch Template</strong> saves the clean setup rules: employees, branch shift times, rotations, task exemptions, auto-fill options, station settings, roles, target hours, and custom tasks.</li>
+              <li>Templates do not include weekly notes, PTO, helper rows, or task assignments.</li>
+              <li><strong>Print</strong> prints only the active tab, which keeps the Schedule and Station Plan from mixing together.</li>
+            </ul>
+          </section>
+          <section class="tutorial-section">
+            <span class="tutorial-step">Safety</span>
+            <h3>Shortcuts And Resets</h3>
+            <ul class="tutorial-list">
+              <li><strong>Cmd/Ctrl + S</strong> saves the current schedule file.</li>
+              <li><strong>Cmd/Ctrl + Z</strong> undoes the last change.</li>
+              <li><strong>Cmd/Ctrl + Shift + Z</strong> or <strong>Ctrl + Y</strong> redoes the change.</li>
+              <li><strong>Reset Tasks</strong> clears task tags but keeps the shifts.</li>
+              <li><strong>Reset Schedule</strong> rebuilds the week from the current employee setup and removes helper rows.</li>
+              <li><strong>Clear To Blank</strong> removes imported employees and schedule data so you can start over from an empty canvas.</li>
+            </ul>
+          </section>
+        </div>
+        <div class="confirm-actions">
+          <button id="tutorialClose" type="button" class="secondary-button">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <input id="importScheduleFile" type="file" accept="application/json,.json" class="sr-only" />
+    <div id="toast" class="toast is-hidden" aria-live="polite"></div>
+    <div id="cellEditorDockOverlay" class="dock-overlay is-hidden" aria-hidden="true">
+      <div class="dock-zone dock-zone-left">Snap Left</div>
+      <div class="dock-zone dock-zone-right">Snap Right</div>
+    </div>
+
+    <script src="script.js?v=2026-05-19-setup-return"></script>
+  </body>
+</html>
